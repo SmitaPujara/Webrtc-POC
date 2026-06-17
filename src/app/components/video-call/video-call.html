@@ -1,0 +1,126 @@
+<div class="whatsapp-container" [class.alone]="roomCount() < 2">
+
+  <!-- TOP BAR -->
+  <header class="top-overlay-bar">
+
+    <div class="room-panel">
+      <input
+        type="text"
+        placeholder="Enter Room ID"
+        [value]="roomId()"
+        (input)="roomId.set($any($event.target).value)"
+      />
+
+      <button
+        class="join-action-btn"
+        (click)="joinRoom()">
+        Join
+      </button>
+    </div>
+
+    <div class="status-display">
+      <span class="status-lbl">
+        {{ callStatus() }}
+      </span>
+
+      @if(roomCount() < 2){
+        <span class="status-hint">
+          Waiting for participant...
+        </span>
+      }
+    </div>
+
+  </header>
+
+  <!-- VIDEO AREA -->
+  <main class="video-canvas">
+
+    <!-- REMOTE VIDEO -->
+    <div
+      class="video-wrapper remote-video-box"
+      [class.full-screen]="!isSwapped()"
+      [class.floating-screen]="isSwapped()"
+      (click)="isSwapped() && swapVideos()">
+
+      <video
+        #remoteVideo
+        autoplay
+        playsinline>
+      </video>
+
+      <div class="video-gradient"></div>
+
+      <span class="user-tag">
+        Remote Participant
+      </span>
+
+    </div>
+
+    <!-- LOCAL VIDEO -->
+    <div
+      class="video-wrapper local-video-box"
+      [class.full-screen]="isSwapped()"
+      [class.floating-screen]="!isSwapped()"
+      (click)="!isSwapped() && swapVideos()">
+
+      <video
+        #localVideo
+        autoplay
+        muted
+        playsinline>
+      </video>
+
+      <div class="video-gradient"></div>
+
+      <span class="user-tag">
+        You
+      </span>
+
+    </div>
+
+  </main>
+
+  <!-- CONTROLS -->
+  <footer class="bottom-controls-drawer">
+
+    <div class="circular-button-row">
+
+      <button
+        class="circle-btn btn-start"
+        (click)="startCall()"
+        [disabled]="roomCount() < 2">
+        📞
+      </button>
+
+      <button
+        class="circle-btn btn-utility"
+        [class.muted-active]="isMuted()"
+        (click)="toggleMute()"
+        [disabled]="!localStream">
+
+        {{ isMuted() ? '🔊' : '🎤' }}
+
+      </button>
+
+      <button
+        class="circle-btn btn-utility"
+        [class.camera-active]="isCameraOff()"
+        (click)="toggleCamera()"
+        [disabled]="!localStream">
+
+        {{ isCameraOff() ? '📷' : '📹' }}
+
+      </button>
+
+      <button
+        class="circle-btn btn-end"
+        (click)="endCall()">
+
+        📞
+      </button>
+
+    </div>
+
+  </footer>
+
+</div>

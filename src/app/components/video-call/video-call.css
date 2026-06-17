@@ -1,0 +1,347 @@
+:host {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+  font-family: Inter, sans-serif;
+}
+
+/* ROOT */
+
+.whatsapp-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* VIDEO AREA */
+
+.video-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.video-wrapper {
+  position: absolute;
+  overflow: hidden;
+  background: #111;
+
+  transition:
+    width .35s ease,
+    height .35s ease,
+    top .35s ease,
+    right .35s ease,
+    left .35s ease,
+    border-radius .35s ease,
+    transform .35s ease;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* FULL SCREEN */
+
+.full-screen {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* FLOATING SCREEN */
+
+.floating-screen {
+  width: 180px;
+  height: 280px;
+
+  top: 90px;
+  right: 20px;
+
+  z-index: 20;
+
+  border-radius: 22px;
+
+  cursor: pointer;
+
+  border: 2px solid rgba(255,255,255,.12);
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.5);
+
+  backdrop-filter: blur(15px);
+}
+
+.floating-screen:hover {
+  transform: scale(1.03);
+}
+
+/* WAITING SCREEN */
+
+.whatsapp-container.alone .remote-video-box {
+  display: none;
+}
+
+.whatsapp-container.alone .local-video-box {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+/* VIDEO OVERLAY */
+
+.video-gradient {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: 120px;
+
+  background:
+    linear-gradient(
+      transparent,
+      rgba(0,0,0,.75)
+    );
+
+  pointer-events: none;
+}
+
+/* USER TAG */
+
+.user-tag {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+
+  z-index: 10;
+
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  text-shadow: 0 2px 6px rgba(0,0,0,.5);
+}
+
+/* TOP BAR */
+
+.top-overlay-bar {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  z-index: 100;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0,0,0,.65),
+      transparent
+    );
+}
+
+/* ROOM PANEL */
+
+.room-panel {
+  display: flex;
+
+  background: rgba(255,255,255,.08);
+
+  backdrop-filter: blur(20px);
+
+  border-radius: 40px;
+
+  padding: 4px;
+
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.room-panel input {
+  width: 130px;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: white;
+
+  padding: 10px 14px;
+}
+
+.room-panel input::placeholder {
+  color: rgba(255,255,255,.55);
+}
+
+.join-action-btn {
+  border: none;
+
+  color: white;
+
+  cursor: pointer;
+
+  padding: 10px 18px;
+
+  border-radius: 24px;
+
+  font-weight: 600;
+
+  background:
+    linear-gradient(
+      135deg,
+      #25d366,
+      #1db954
+    );
+}
+
+/* STATUS */
+
+.status-display {
+  color: white;
+  text-align: right;
+}
+
+.status-lbl {
+  display: block;
+  font-weight: 600;
+}
+
+.status-hint {
+  font-size: 12px;
+  color: rgba(255,255,255,.7);
+}
+
+/* BOTTOM CONTROLS */
+
+.bottom-controls-drawer {
+  position: absolute;
+
+  bottom: 35px;
+  left: 0;
+
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+
+  z-index: 100;
+}
+
+.circular-button-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  padding: 14px 24px;
+
+  border-radius: 999px;
+
+  background: rgba(0,0,0,.4);
+
+  backdrop-filter: blur(25px);
+
+  border: 1px solid rgba(255,255,255,.08);
+
+  box-shadow:
+    0 20px 40px rgba(0,0,0,.4);
+}
+
+/* BUTTONS */
+
+.circle-btn {
+  width: 58px;
+  height: 58px;
+
+  border-radius: 50%;
+
+  border: none;
+
+  color: white;
+
+  cursor: pointer;
+
+  font-weight: 600;
+
+  transition: all .2s ease;
+}
+
+.circle-btn:hover {
+  transform: translateY(-3px);
+}
+
+.circle-btn:disabled {
+  opacity: .35;
+}
+
+.btn-start {
+  background:
+    linear-gradient(
+      135deg,
+      #25d366,
+      #1db954
+    );
+}
+
+.btn-end {
+  background:
+    linear-gradient(
+      135deg,
+      #ff4d6d,
+      #d90429
+    );
+}
+
+.btn-utility {
+  background: rgba(255,255,255,.12);
+}
+
+.muted-active,
+.camera-active {
+  background: white !important;
+  color: black !important;
+}
+
+/* MOBILE */
+
+@media (max-width:768px) {
+
+  .floating-screen {
+    width: 120px;
+    height: 180px;
+
+    top: 85px;
+    right: 15px;
+  }
+
+  .circle-btn {
+    width: 50px;
+    height: 50px;
+  }
+
+  .circular-button-row {
+    gap: 10px;
+    padding: 12px 16px;
+  }
+
+  .room-panel input {
+    width: 90px;
+  }
+}
