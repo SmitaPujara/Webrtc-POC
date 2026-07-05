@@ -1,0 +1,167 @@
+<div class="register-container">
+
+  <div class="register-card">
+
+    <h2>Create Account</h2>
+
+    <p>Create your account to continue</p>
+
+    @if(successMessage){
+
+      <div class="success">
+
+        {{ successMessage }}
+
+      </div>
+
+    }
+
+    @if(errorMessage){
+
+      <div class="error">
+
+        {{ errorMessage }}
+
+      </div>
+
+    }
+
+    <form
+      [formGroup]="registerForm"
+      (ngSubmit)="register()">
+
+      <div class="form-group">
+
+        <label for="username">Username</label>
+
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          placeholder="Enter username">
+
+        @if(submitted && registerForm.controls.username.invalid){
+
+      <small>
+
+        @if(registerForm.controls.username.errors?.['required']){
+
+          Username is required.
+
+        }
+
+        @if(registerForm.controls.username.errors?.['minlength']){
+
+          Username must be at least 3 characters.
+
+        }
+
+        @if(registerForm.controls.username.errors?.['pattern']){
+
+          Username can contain only letters and spaces.
+
+        }
+
+      </small>
+
+}
+
+      </div>
+
+      <div class="form-group">
+
+        <label for="email">Email</label>
+
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="Enter email">
+
+        @if(submitted && registerForm.controls.email.invalid){
+
+  <small>
+
+    @if(registerForm.controls.email.errors?.['required']){
+
+      Email is required.
+
+    }
+
+    @if(registerForm.controls.email.errors?.['email']){
+
+      Please enter a valid email address.
+
+    }
+
+  </small>
+
+}
+
+      </div>
+
+      <div class="form-group">
+
+        <label for="password">Password</label>
+
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="Enter password">
+
+      @if(submitted && registerForm.controls.password.invalid){
+
+  <small>
+
+    @if(registerForm.controls.password.errors?.['required']){
+
+      Password is required.
+
+    }
+
+    @if(registerForm.controls.password.errors?.['pattern']){
+
+      Password must contain:
+      <br>
+      • At least 8 characters
+      <br>
+      • One uppercase letter
+      <br>
+      • One lowercase letter
+      <br>
+      • One number
+      <br>
+      • One special character (@$!%*?&)
+
+    }
+
+  </small>
+
+}
+
+      </div>
+
+      <button type="submit">
+
+        Register
+
+      </button>
+
+    </form>
+
+    <div class="login-link">
+
+      Already have an account?
+
+      <a routerLink="/login">
+
+        Login
+
+      </a>
+
+    </div>
+
+  </div>
+
+</div>

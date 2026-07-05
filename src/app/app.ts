@@ -1,10 +1,10 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { VideoCallComponent } from './components/video-call/video-call';
 
 @Component({
   selector: 'app-root',
-  imports: [VideoCallComponent],
+  standalone: true,
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

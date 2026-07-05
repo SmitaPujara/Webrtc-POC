@@ -4,6 +4,7 @@
   <header class="top-overlay-bar">
 
     <div class="room-panel">
+
       <input
         type="text"
         placeholder="Enter Room ID"
@@ -11,23 +12,38 @@
         (input)="roomId.set($any($event.target).value)"
       />
 
-      <button
-        class="join-action-btn"
-        (click)="joinRoom()">
-        Join
-      </button>
+      @if(!isRoomJoined){
+
+        <button
+          class="join-action-btn"
+          (click)="joinRoom()">
+
+          Join
+
+        </button>
+
+      }
+
     </div>
 
     <div class="status-display">
+
       <span class="status-lbl">
+
         {{ callStatus() }}
+
       </span>
 
       @if(roomCount() < 2){
+
         <span class="status-hint">
+
           Waiting for participant...
+
         </span>
+
       }
+
     </div>
 
   </header>
@@ -51,7 +67,9 @@
       <div class="video-gradient"></div>
 
       <span class="user-tag">
+
         Remote Participant
+
       </span>
 
     </div>
@@ -73,7 +91,9 @@
       <div class="video-gradient"></div>
 
       <span class="user-tag">
+
         You
+
       </span>
 
     </div>
@@ -85,13 +105,17 @@
 
     <div class="circular-button-row">
 
+      <!-- Start Call -->
       <button
         class="circle-btn btn-start"
         (click)="startCall()"
         [disabled]="roomCount() < 2">
+
         📞
+
       </button>
 
+      <!-- Mute -->
       <button
         class="circle-btn btn-utility"
         [class.muted-active]="isMuted()"
@@ -102,6 +126,7 @@
 
       </button>
 
+      <!-- Camera -->
       <button
         class="circle-btn btn-utility"
         [class.camera-active]="isCameraOff()"
@@ -112,11 +137,23 @@
 
       </button>
 
+      <!-- End Call -->
       <button
         class="circle-btn btn-end"
         (click)="endCall()">
 
         📞
+
+      </button>
+
+      <!-- Logout -->
+      <button
+        class="circle-btn btn-logout"
+        (click)="logout()"
+        [disabled]="isCallConnected">
+
+        🚪
+
       </button>
 
     </div>

@@ -12,6 +12,8 @@ export class WebrtcService {
   private remoteVideo!: HTMLVideoElement;
   private pendingIceCandidates: RTCIceCandidateInit[] = [];
   private roomId = 'demo-room';
+  isRoomJoined = false;
+  isCallConnected = false;
 
   public onCallStatusChange:
     ((status: string) => void) | null = null;
@@ -23,6 +25,9 @@ export class WebrtcService {
     (() => Promise<MediaStream | null>) | null = null;
 
   public onRemoteHangup: (() => void) | null = null;
+
+  public onConnectionStateChange:
+  ((connected: boolean) => void) | null = null;
 
   private isInCall = false;
   private isNegotiating = false;
@@ -100,42 +105,62 @@ export class WebrtcService {
         ]
       });
 
-    this.peerConnection.onconnectionstatechange =
-      () => {
+    this.peerConnection.onconnectionstatechange = () => {
 
-        console.log(
-          'Connection State:',
-          this.peerConnection.connectionState
-        );
+  console.log(
+    'Connection State:',
+    this.peerConnection.connectionState
+  );
 
-        switch (
-          this.peerConnection.connectionState
-        ) {
+  switch (this.peerConnection.connectionState) {
 
-          case 'connecting':
-            this.updateCallStatus('Connecting...');
-            break;
+    case 'connecting':
 
-          case 'connected':
-            this.isInCall = true;
-            this.isNegotiating = false;
-            this.updateCallStatus('Connected');
-            break;
+      this.updateCallStatus('Connecting...');
+      break;
 
-          case 'disconnected':
-          case 'failed':
-            if (this.isInCall || this.isNegotiating) {
-              this.resetCallState();
-              this.ngZone.run(() => {
-                this.onRemoteHangup?.();
-              });
-            }
-            break;
+   case 'connected':
 
-          case 'closed':
-            break;
-        }
-      };
+  this.isInCall = true;
+  this.isNegotiating = false;
+
+  this.updateCallStatus('Connected');
+
+  this.ngZone.run(() => {
+    this.onConnectionStateChange?.(true);
+  });
+
+  break;
+
+    case 'disconnected':
+case 'failed':
+
+  this.ngZone.run(() => {
+    this.onConnectionStateChange?.(false);
+  });
+
+  if (this.isInCall || this.isNegotiating) {
+
+    this.resetCallState();
+
+    this.ngZone.run(() => {
+      this.onRemoteHangup?.();
+    });
+
+  }
+
+  break;
+
+    case 'closed':
+
+  this.ngZone.run(() => {
+    this.onConnectionStateChange?.(false);
+  });
+
+  break;
+}
+
+};
 
     this.peerConnection.onicecandidate =
       (event) => {

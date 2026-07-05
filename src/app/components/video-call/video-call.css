@@ -344,4 +344,27 @@ video {
   .room-panel input {
     width: 90px;
   }
+  .btn-logout {
+
+    background: #ef4444;
+
+    color: white;
+
+}
+
+.btn-logout:hover {
+
+    background: #dc2626;
+
+}
+
+.btn-logout:disabled {
+
+    background: #9ca3af;
+
+    cursor: not-allowed;
+
+    opacity: .7;
+
+}
 }
