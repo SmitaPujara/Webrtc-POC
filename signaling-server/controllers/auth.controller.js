@@ -10,9 +10,6 @@ const JWT_SECRET = process.env.JWT_SECRET;
 exports.register = async (req, res) => {
 
     try {
-        console.log("DB Object:", db);
-        console.log("Type of db.get:", typeof db.get);
-        
 
         const { username, email, password } = req.body;
 
@@ -23,9 +20,11 @@ exports.register = async (req, res) => {
             });
         }
 
+        const normalizedEmail = email.trim().toLowerCase(); // 👈 add this
+
         db.get(
             "SELECT * FROM users WHERE email = ?",
-            [email],
+            [normalizedEmail], // 👈 use normalized value
             async (err, user) => {
 
                 if (err) {
@@ -49,7 +48,7 @@ exports.register = async (req, res) => {
                      VALUES(?,?,?)`,
                     [
                         username,
-                        email,
+                        normalizedEmail, // 👈 store normalized value
                         hashedPassword
                     ],
                     function (err) {
@@ -100,7 +99,8 @@ exports.login = (req, res) => {
         });
 
     }
-
+    const normalizedEmail = email.trim().toLowerCase();
+    
     db.get(
         "SELECT * FROM users WHERE email=?",
         [email],

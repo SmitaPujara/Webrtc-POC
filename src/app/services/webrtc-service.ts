@@ -1,6 +1,11 @@
 import { Injectable, NgZone } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 
+export interface AppUser {
+  username: string;
+  status: 'ONLINE' | 'RINGING' | 'BUSY';
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -11,27 +16,39 @@ export class WebrtcService {
   public peerConnection!: RTCPeerConnection;
   private remoteVideo!: HTMLVideoElement;
   private pendingIceCandidates: RTCIceCandidateInit[] = [];
-  private roomId = 'demo-room';
-  isRoomJoined = false;
-  isCallConnected = false;
 
-  public onCallStatusChange:
-    ((status: string) => void) | null = null;
-
-  public onRoomCountChange:
-    ((count: number) => void) | null = null;
-
-  public onIncomingCall:
-    (() => Promise<MediaStream | null>) | null = null;
-
-  public onRemoteHangup: (() => void) | null = null;
-
-  public onConnectionStateChange:
-  ((connected: boolean) => void) | null = null;
+  public username = '';
+  public remoteUsername: string | null = null;
 
   private isInCall = false;
   private isNegotiating = false;
   private isCaller = false;
+
+  public onCallStatusChange:
+    ((status: string) => void) | null = null;
+
+  public onUsersListChange:
+    ((users: AppUser[]) => void) | null = null;
+
+  public onIncomingCallRequest:
+    ((from: string) => void) | null = null;
+
+  public onGetLocalStream:
+    (() => Promise<MediaStream | null>) | null = null;
+
+  public onCallFailed:
+    ((reason: string) => void) | null = null;
+
+  public onCallRejected:
+    (() => void) | null = null;
+
+    public onCallCancelled:
+    (() => void) | null = null;
+
+  public onRemoteHangup: (() => void) | null = null;
+
+  public onConnectionStateChange:
+    ((connected: boolean) => void) | null = null;
 
   constructor(private ngZone: NgZone) {
 
@@ -39,12 +56,39 @@ export class WebrtcService {
 
     this.createPeerConnection();
     this.registerEvents();
-    this.joinRoom(this.roomId);
   }
 
-  joinRoom(roomId: string) {
-    this.roomId = roomId;
-    this.socket.emit('join-room', roomId);
+ login(username: string) {
+  this.username = username;
+  if (!this.socket.connected) {
+    this.socket.connect();   // 👈 add this
+  }
+  this.socket.emit('login', username);
+}
+  callUser(to: string) {
+    this.remoteUsername = to;
+    this.isCaller = true;
+
+    this.updateCallStatus('Ringing...');
+
+    this.socket.emit('call-user', { to });
+  }
+
+   cancelCall() {
+    this.socket.emit('cancel-call');
+    this.resetCallState();
+    this.updateCallStatus('Idle');
+  }
+
+  acceptCall() {
+    this.socket.emit('accept-call');
+    this.updateCallStatus('Connecting...');
+  }
+
+  rejectCall() {
+    this.socket.emit('reject-call');
+    this.resetCallState();
+    this.updateCallStatus('Idle');
   }
 
   private updateCallStatus(status: string) {
@@ -53,9 +97,9 @@ export class WebrtcService {
     });
   }
 
-  private updateRoomCount(count: number) {
+  private updateUsersList(users: AppUser[]) {
     this.ngZone.run(() => {
-      this.onRoomCountChange?.(count);
+      this.onUsersListChange?.(users);
     });
   }
 
@@ -107,60 +151,60 @@ export class WebrtcService {
 
     this.peerConnection.onconnectionstatechange = () => {
 
-  console.log(
-    'Connection State:',
-    this.peerConnection.connectionState
-  );
+      console.log(
+        'Connection State:',
+        this.peerConnection.connectionState
+      );
 
-  switch (this.peerConnection.connectionState) {
+      switch (this.peerConnection.connectionState) {
 
-    case 'connecting':
+        case 'connecting':
 
-      this.updateCallStatus('Connecting...');
-      break;
+          this.updateCallStatus('Connecting...');
+          break;
 
-   case 'connected':
+        case 'connected':
 
-  this.isInCall = true;
-  this.isNegotiating = false;
+          this.isInCall = true;
+          this.isNegotiating = false;
 
-  this.updateCallStatus('Connected');
+          this.updateCallStatus('Connected');
 
-  this.ngZone.run(() => {
-    this.onConnectionStateChange?.(true);
-  });
+          this.ngZone.run(() => {
+            this.onConnectionStateChange?.(true);
+          });
 
-  break;
+          break;
 
-    case 'disconnected':
-case 'failed':
+        case 'disconnected':
+        case 'failed':
 
-  this.ngZone.run(() => {
-    this.onConnectionStateChange?.(false);
-  });
+          this.ngZone.run(() => {
+            this.onConnectionStateChange?.(false);
+          });
 
-  if (this.isInCall || this.isNegotiating) {
+          if (this.isInCall || this.isNegotiating) {
 
-    this.resetCallState();
+            this.resetCallState();
 
-    this.ngZone.run(() => {
-      this.onRemoteHangup?.();
-    });
+            this.ngZone.run(() => {
+              this.onRemoteHangup?.();
+            });
 
-  }
+          }
 
-  break;
+          break;
 
-    case 'closed':
+        case 'closed':
 
-  this.ngZone.run(() => {
-    this.onConnectionStateChange?.(false);
-  });
+          this.ngZone.run(() => {
+            this.onConnectionStateChange?.(false);
+          });
 
-  break;
-}
+          break;
+      }
 
-};
+    };
 
     this.peerConnection.onicecandidate =
       (event) => {
@@ -192,25 +236,103 @@ case 'failed':
         'Connected:',
         this.socket.id
       );
-      this.joinRoom(this.roomId);
+
+      if (this.username) {
+        this.socket.emit('login', this.username);
+      }
     });
 
-    this.socket.on('room-count', (count: number) => {
-      this.updateRoomCount(count);
+    this.socket.on('users-list', (list: AppUser[]) => {
+      console.log('USERS LIST RECEIVED:', list);
+      this.updateUsersList(list);
     });
+
+    this.socket.on('call-failed', (reason: string) => {
+      this.resetCallState();
+      this.updateCallStatus('Idle');
+
+      this.ngZone.run(() => {
+        this.onCallFailed?.(reason);
+      });
+    });
+
+    this.socket.on('incoming-call', ({ from }: { from: string }) => {
+
+      if (this.isInCall || this.isNegotiating) {
+        return;
+      }
+
+      this.remoteUsername = from;
+      this.isCaller = false;
+
+      this.updateCallStatus(`Incoming call from ${from}`);
+
+      this.ngZone.run(() => {
+        this.onIncomingCallRequest?.(from);
+      });
+    });
+
+    this.socket.on('call-accepted', async () => {
+
+      if (!this.isCaller) {
+        return;
+      }
+
+      try {
+        this.isNegotiating = true;
+        this.updateCallStatus('Connecting...');
+
+        const localStream = await this.onGetLocalStream?.();
+
+        if (localStream) {
+          localStream.getTracks().forEach(track => {
+            this.peerConnection.addTrack(track, localStream);
+          });
+        }
+
+        const offer =
+          await this.peerConnection.createOffer();
+
+        await this.peerConnection.setLocalDescription(offer);
+
+        this.socket.emit('offer', offer);
+
+      } catch (error) {
+        console.error(error);
+        this.resetCallState();
+        this.updateCallStatus('Call Failed');
+      }
+    });
+
+    this.socket.on('call-rejected', () => {
+      this.resetCallState();
+      this.updateCallStatus('Call Rejected');
+
+      this.ngZone.run(() => {
+        this.onCallRejected?.();
+      });
+    });
+    this.socket.on('call-cancelled', () => {          // 👈 ADD THIS BLOCK
+  this.resetCallState();
+  this.updateCallStatus('Idle');
+
+  this.ngZone.run(() => {
+    this.onCallCancelled?.();
+  });
+});
 
     this.socket.on(
       'offer',
       async (offer) => {
-        if (this.isCaller || this.isNegotiating || this.isInCall) {
+        if (this.isCaller || this.isInCall) {
           return;
         }
 
         try {
           this.isNegotiating = true;
-          this.updateCallStatus('Incoming call...');
+          this.updateCallStatus('Connecting...');
 
-          const localStream = await this.onIncomingCall?.();
+          const localStream = await this.onGetLocalStream?.();
           if (localStream) {
             localStream.getTracks().forEach(track => {
               this.peerConnection.addTrack(track, localStream);
@@ -281,11 +403,6 @@ case 'failed':
     });
   }
 
-  beginCall() {
-    this.isCaller = true;
-    this.isNegotiating = true;
-  }
-
   hangUp() {
     this.resetCallState();
     this.socket.emit('hangup');
@@ -295,6 +412,7 @@ case 'failed':
     this.isInCall = false;
     this.isNegotiating = false;
     this.isCaller = false;
+    this.remoteUsername = null;
   }
 
   closeConnection() {
@@ -312,4 +430,16 @@ case 'failed':
     this.resetCallState();
     this.createPeerConnection();
   }
+  logoutCleanup() {
+    this.resetCallState();
+  // Close peer connection
+  if (this.peerConnection) {
+    this.peerConnection.close();
+  }
+  // Disconnect socket
+  if (this.socket) {
+    this.socket.disconnect();
+  }
+
+}
 }

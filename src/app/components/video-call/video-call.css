@@ -127,7 +127,7 @@ video {
   font-size: 14px;
   font-weight: 600;
 
-  text-shadow: 0 2px 6px rgba(0,0,0,.5);
+  text-shadow: 0 2px 6px rgb(243, 237, 237);
 }
 
 /* TOP BAR */
@@ -344,27 +344,144 @@ video {
   .room-panel input {
     width: 90px;
   }
-  .btn-logout {
 
-    background: #ef4444;
+}
 
-    color: white;
-
+.btn-logout {
+  background: #ef4444;
+  color: white;
 }
 
 .btn-logout:hover {
-
-    background: #dc2626;
-
+  background: #dc2626;
 }
 
 .btn-logout:disabled {
-
-    background: #9ca3af;
-
-    cursor: not-allowed;
-
-    opacity: .7;
-
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: .7;
 }
+
+/* Top bar self tag */
+.self-tag {
+  font-size: 14px;
+  opacity: 0.8;
+  color: white;
+}
+
+/* Incoming call modal */
+.incoming-call-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.incoming-call-card {
+  background: #1e1e1e;
+  color: #fff;
+  padding: 24px 32px;
+  border-radius: 12px;
+  text-align: center;
+  min-width: 260px;
+}
+
+.incoming-call-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.accept-btn, .reject-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.accept-btn {
+  background: #25d366;
+  color: #fff;
+}
+
+.reject-btn {
+  background: #e74c3c;
+  color: #fff;
+}
+
+/* User list */
+.user-list {
+  position: relative;
+  z-index: 5;
+  padding: 90px 16px 16px;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: #2a2a2a;
+  border-radius: 8px;
+  color: #fff;
+}
+
+.user-name {
+  font-weight: 500;
+}
+
+.user-status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.user-status.online {
+  background: #25d366;
+  color: #fff;
+}
+
+.user-status.ringing {
+  background: #f39c12;
+  color: #fff;
+}
+
+.user-status.busy {
+  background: #7f8c8d;
+  color: #fff;
+}
+
+.call-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #128c7e;
+  color: #fff;
+  cursor: pointer;
+}
+
+.call-btn:disabled {
+  background: #555;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.no-users {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+}
+
+/* Hide video canvas until connected */
+.video-canvas.hidden {
+  display: none;
 }

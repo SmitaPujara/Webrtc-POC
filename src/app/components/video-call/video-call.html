@@ -1,55 +1,77 @@
-<div class="whatsapp-container" [class.alone]="roomCount() < 2">
+<div class="whatsapp-container">
 
   <!-- TOP BAR -->
   <header class="top-overlay-bar">
 
     <div class="room-panel">
-
-      <input
-        type="text"
-        placeholder="Enter Room ID"
-        [value]="roomId()"
-        (input)="roomId.set($any($event.target).value)"
-      />
-
-      @if(!isRoomJoined){
-
-        <button
-          class="join-action-btn"
-          (click)="joinRoom()">
-
-          Join
-
-        </button>
-
-      }
-
+      <span class="self-tag">You: {{ username() }}</span>
     </div>
 
     <div class="status-display">
-
-      <span class="status-lbl">
-
-        {{ callStatus() }}
-
-      </span>
-
-      @if(roomCount() < 2){
-
-        <span class="status-hint">
-
-          Waiting for participant...
-
-        </span>
-
-      }
-
+      <span class="status-lbl">{{ callStatus() }}</span>
     </div>
 
   </header>
 
+  <!-- INCOMING CALL MODAL -->
+  @if(incomingCallFrom()){
+
+    <div class="incoming-call-overlay">
+
+      <div class="incoming-call-card">
+
+        <p>Incoming call from <strong>{{ incomingCallFrom() }}</strong></p>
+
+        <div class="incoming-call-actions">
+
+          <button class="accept-btn" (click)="acceptCall()">Accept</button>
+
+          <button class="reject-btn" (click)="rejectCall()">Reject</button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+  <!-- USER LIST (hidden once ringing out or connected) -->
+  @if(!inCallFlow()){
+
+    <section class="user-list">
+
+      @for(u of otherUsers(); track u.username){
+
+        <div class="user-row">
+
+          <span class="user-name">{{ u.username }}</span>
+
+          <span class="user-status" [class]="u.status.toLowerCase()">
+            {{ u.status }}
+          </span>
+
+          <button
+            class="call-btn"
+            [disabled]="u.status !== 'ONLINE'"
+            (click)="callUser(u)">
+            Call
+          </button>
+
+        </div>
+
+      } @empty {
+
+        <p class="no-users">No other users online</p>
+
+      }
+
+    </section>
+
+  }
+
   <!-- VIDEO AREA -->
-  <main class="video-canvas">
+  <main class="video-canvas" [class.hidden]="!isCallConnected()">
 
     <!-- REMOTE VIDEO -->
     <div
@@ -58,19 +80,11 @@
       [class.floating-screen]="isSwapped()"
       (click)="isSwapped() && swapVideos()">
 
-      <video
-        #remoteVideo
-        autoplay
-        playsinline>
-      </video>
+      <video #remoteVideo autoplay playsinline></video>
 
       <div class="video-gradient"></div>
 
-      <span class="user-tag">
-
-        Remote Participant
-
-      </span>
+      <span class="user-tag">Remote Participant</span>
 
     </div>
 
@@ -81,20 +95,11 @@
       [class.floating-screen]="!isSwapped()"
       (click)="!isSwapped() && swapVideos()">
 
-      <video
-        #localVideo
-        autoplay
-        muted
-        playsinline>
-      </video>
+      <video #localVideo autoplay muted playsinline></video>
 
       <div class="video-gradient"></div>
 
-      <span class="user-tag">
-
-        You
-
-      </span>
+      <span class="user-tag">You</span>
 
     </div>
 
@@ -105,25 +110,13 @@
 
     <div class="circular-button-row">
 
-      <!-- Start Call -->
-      <button
-        class="circle-btn btn-start"
-        (click)="startCall()"
-        [disabled]="roomCount() < 2">
-
-        📞
-
-      </button>
-
       <!-- Mute -->
       <button
         class="circle-btn btn-utility"
         [class.muted-active]="isMuted()"
         (click)="toggleMute()"
         [disabled]="!localStream">
-
         {{ isMuted() ? '🔊' : '🎤' }}
-
       </button>
 
       <!-- Camera -->
@@ -132,28 +125,23 @@
         [class.camera-active]="isCameraOff()"
         (click)="toggleCamera()"
         [disabled]="!localStream">
-
         {{ isCameraOff() ? '📷' : '📹' }}
-
       </button>
 
-      <!-- End Call -->
+      <!-- End / Cancel Call -->
       <button
         class="circle-btn btn-end"
-        (click)="endCall()">
-
+        (click)="handleEndButton()"
+        [disabled]="!isCallConnected() && !isRinging()">
         📞
-
       </button>
 
       <!-- Logout -->
       <button
         class="circle-btn btn-logout"
         (click)="logout()"
-        [disabled]="isCallConnected">
-
+        [disabled]="!canLogout()">
         🚪
-
       </button>
 
     </div>

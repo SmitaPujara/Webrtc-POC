@@ -27,7 +27,7 @@ export class Register {
   private router = inject(Router);
 
   submitted = false;
-
+  submitting = false;
   errorMessage = '';
   successMessage = '';
 registerForm = this.fb.group({
@@ -71,11 +71,11 @@ registerForm = this.fb.group({
     if (this.registerForm.invalid) {
       return;
     }
-
+    this.submitting = true;
     this.authService.register(this.registerForm.value).subscribe({
 
       next: (response: any) => {
-
+        this.submitting = false;
         this.successMessage = response.message;
 
         alert('Registration Successful');
@@ -91,9 +91,10 @@ registerForm = this.fb.group({
       },
 
       error: (error) => {
-
+        this.submitting = false;
         this.errorMessage =
           error.error?.message || 'Registration failed';
+console.log('errorMessage set to:', this.errorMessage); // 👈 add this
 
       }
 

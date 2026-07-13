@@ -3,13 +3,14 @@ import {
   ViewChild,
   ElementRef,
   AfterViewInit,
-  signal
+  signal,
+  computed
 } from '@angular/core';
 
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth';
-import { WebrtcService } from '../../services/webrtc-service';
+import { WebrtcService, AppUser } from '../../services/webrtc-service';
 
 @Component({
   selector: 'app-video-call',
@@ -32,15 +33,28 @@ export class VideoCallComponent implements AfterViewInit {
 
   callStatus = signal('Idle');
 
-  roomCount = signal(0);
+  username = signal('');
 
-  roomId = signal('demo-room');
+  users = signal<AppUser[]>([]);
+
+  // never show yourself in the callable list
+  otherUsers = computed(() =>
+    this.users().filter(u => u.username !== this.username())
+  );
+
+  incomingCallFrom = signal<string | null>(null);
 
   isSwapped = signal(false);
 
-  isRoomJoined = false;
+  isCallConnected = signal(false);
 
-  isCallConnected = false;
+   // true from the moment you press "Call" until it's accepted/failed/cancelled
+  isRinging = signal(false);
+
+  // true whenever we're either ringing out or already connected
+  inCallFlow = computed(() =>
+    this.isRinging() || this.isCallConnected()
+  );
 
   swapVideos() {
     this.isSwapped.update(v => !v);
@@ -52,22 +66,60 @@ export class VideoCallComponent implements AfterViewInit {
     private router: Router
   ) {
 
+    const storedUser = this.authService.getUser();
+
+    console.log('Stored user:', storedUser);
+
+    const currentUsername =
+      storedUser?.username ??
+      storedUser?.name ??
+      storedUser?.email ??
+      '';
+
+    if (!currentUsername) {
+      console.warn('No username found — check AuthService.getUser() shape, or log in again.');
+    }
+
+    this.username.set(currentUsername);
+    this.webrtc.login(currentUsername);
+
     this.webrtc.onCallStatusChange = (status: string) => {
       this.callStatus.set(status);
     };
 
-    this.webrtc.onRoomCountChange = (count: number) => {
-      this.roomCount.set(count);
+    this.webrtc.onUsersListChange = (list: AppUser[]) => {
+      this.users.set(list);
+    };
+
+    this.webrtc.onIncomingCallRequest = (from: string) => {
+      this.incomingCallFrom.set(from);
+    };
+
+   this.webrtc.onCallFailed = (reason: string) => {
+      this.isRinging.set(false);
+      this.callStatus.set(reason);
+    };
+
+    this.webrtc.onCallRejected = () => {
+      this.isRinging.set(false);
+      this.callStatus.set('Call Rejected');
+    };
+
+    this.webrtc.onCallCancelled = () => {
+      this.incomingCallFrom.set(null);
+      this.isRinging.set(false);
+      this.callStatus.set('Idle');
     };
 
     this.webrtc.onRemoteHangup = () => {
       this.endCall(false);
     };
 
-this.webrtc.onConnectionStateChange = (connected) => {
-  this.isCallConnected = connected;
-};
-    this.webrtc.onIncomingCall = async () => {
+    this.webrtc.onConnectionStateChange = (connected) => {
+      this.isCallConnected.set(connected);
+    };
+
+    this.webrtc.onGetLocalStream = async () => {
 
       try {
 
@@ -106,82 +158,36 @@ this.webrtc.onConnectionStateChange = (connected) => {
 
   }
 
-  joinRoom() {
+  callUser(target: AppUser) {
 
-    if (this.isRoomJoined) {
+    if (target.status !== 'ONLINE') {
       return;
     }
+    this.isRinging.set(true);
+    this.callStatus.set(`Calling ${target.username}...`);
 
-    this.webrtc.joinRoom(this.roomId());
-
-    this.callStatus.set('Waiting for participant...');
-
-    this.isRoomJoined = true;
+    this.webrtc.callUser(target.username);
 
   }
 
-  async startCall() {
+  cancelCall() {
 
-    if (this.roomCount() < 2) {
+    this.webrtc.cancelCall();
+    this.isRinging.set(false);
+    this.callStatus.set('Idle');
 
-      this.callStatus.set('Need 2 tabs in the same room');
+  }
+  acceptCall() {
 
-      return;
+    this.incomingCallFrom.set(null);
+    this.webrtc.acceptCall();
 
-    }
+  }
 
-    if (this.localStream) {
-      return;
-    }
+  rejectCall() {
 
-    try {
-
-      this.callStatus.set('Calling...');
-
-      this.isCallConnected = true;
-
-      this.webrtc.beginCall();
-
-      const stream =
-        await navigator.mediaDevices.getUserMedia({
-
-          video: true,
-          audio: true
-
-        });
-
-      this.localStream = stream;
-
-      this.localVideo.nativeElement.srcObject = stream;
-
-      stream.getTracks().forEach(track => {
-
-        this.webrtc.peerConnection.addTrack(
-          track,
-          stream
-        );
-
-      });
-
-      const offer =
-        await this.webrtc.peerConnection.createOffer();
-
-      await this.webrtc.peerConnection
-        .setLocalDescription(offer);
-
-      this.webrtc.socket.emit(
-        'offer',
-        offer
-      );
-
-    }
-    catch (error) {
-
-      this.callStatus.set('Permission Denied');
-
-      console.error(error);
-
-    }
+    this.incomingCallFrom.set(null);
+    this.webrtc.rejectCall();
 
   }
 
@@ -255,9 +261,9 @@ this.webrtc.onConnectionStateChange = (connected) => {
 
     }
 
-    this.isCallConnected = false;
+    this.isCallConnected.set(false);
 
-    this.isRoomJoined = false;
+    this.incomingCallFrom.set(null);
 
     if (this.localStream) {
 
@@ -273,24 +279,37 @@ this.webrtc.onConnectionStateChange = (connected) => {
 
     this.webrtc.closeConnection();
 
-    this.callStatus.set('Call Ended');
+    this.callStatus.set('Idle');
 
     this.isMuted.set(false);
 
     this.isCameraOff.set(false);
 
   }
+ 
+  handleEndButton() {
 
-  logout() {
-
-    if (this.isCallConnected) {
-      return;
+    if (this.isCallConnected()) {
+      this.endCall();
+    } else if (this.isRinging()) {
+      this.cancelCall();
     }
 
+  }
+  canLogout = computed(() =>
+  !this.isCallConnected() &&
+  !this.isRinging() &&
+  !this.incomingCallFrom()
+);
+
+  logout() {
+if (!this.canLogout()) {
+    return;
+  }
+    this.webrtc.logoutCleanup();
     this.authService.logout();
 
     this.router.navigate(['/login']);
 
   }
-
 }

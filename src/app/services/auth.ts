@@ -42,15 +42,15 @@ export class AuthService {
 
   logout() {
 
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
 
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
 
   }
 
   saveToken(token: string) {
 
-    localStorage.setItem(
+    sessionStorage.setItem(
       'token',
       token
     );
@@ -59,7 +59,7 @@ export class AuthService {
 
   saveUser(user: any) {
 
-    localStorage.setItem(
+    sessionStorage.setItem(
       'user',
       JSON.stringify(user)
     );
@@ -68,13 +68,13 @@ export class AuthService {
 
   getToken(): string | null {
 
-    return localStorage.getItem('token');
+    return sessionStorage.getItem('token');
 
   }
 
   getUser() {
 
-    const user = localStorage.getItem('user');
+    const user = sessionStorage.getItem('user');
 
     return user ? JSON.parse(user) : null;
 
@@ -82,7 +82,7 @@ export class AuthService {
 
   isLoggedIn(): boolean {
 
-    return !!localStorage.getItem('token');
+    return !!sessionStorage.getItem('token');
 
   }
 

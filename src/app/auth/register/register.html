@@ -25,7 +25,6 @@
       </div>
 
     }
-
     <form
       [formGroup]="registerForm"
       (ngSubmit)="register()">
@@ -142,11 +141,9 @@
 
       </div>
 
-      <button type="submit">
-
-        Register
-
-      </button>
+     <button [disabled]="submitting" type="submit">
+            {{ submitting ? 'Registering...' : 'Register' }}
+    </button>
 
     </form>
 
